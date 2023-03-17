@@ -1,18 +1,12 @@
-//
-//  ViewController.swift
-//  Todoey
-//
-//  Created by Philipp Muellauer on 02/12/2019.
-//  Copyright © 2019 App Brewery. All rights reserved.
-//
-
 import UIKit
+import CoreData
+
 
 class TodoListViewController: UITableViewController {
     
     var itemArray = [Item]()
-    
     let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathExtension("Items.plist")
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -41,7 +35,10 @@ class TodoListViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         let item = itemArray[indexPath.row]
-        item.done = !item.done
+        
+//        context.delete(item)
+//        itemArray.remove(at: indexPath.row)
+            item.done = !item.done
         
         saveItems()
         tableView.deselectRow(at: indexPath, animated: true)
@@ -57,8 +54,9 @@ class TodoListViewController: UITableViewController {
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
             
             if textField.text != "" {
-                let newItem = Item()
+                let newItem = Item(context: self.context)
                 newItem.title = textField.text!
+                newItem.done = false
                 self.itemArray.append(newItem)
             } else {
                 let alert = UIAlertController(title: "Task cannot be empty", message: "Enter some text in Text Field", preferredStyle: .alert)
@@ -82,32 +80,22 @@ class TodoListViewController: UITableViewController {
     //MARK: - Model Manipulation Methods
     
     func saveItems() {
-        let encoder = PropertyListEncoder()
-        
         do {
-            let data = try encoder.encode(itemArray)
-            try data.write(to: dataFilePath!)
+            try context.save()
         } catch {
-            print("Error encoding data \(error.localizedDescription )")
+            print("Error saving context \(error.localizedDescription)")
         }
         
         self.tableView.reloadData()
     }
     
     func loadItems() {
-        if let data = try? Data(contentsOf: dataFilePath!) {
-            let decoder = PropertyListDecoder()
-            do {
-                itemArray = try decoder.decode([Item].self, from: data)
-            } catch {
-                print("Error decoding data \(error.localizedDescription)")
-            }
-            
+        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        do {
+            itemArray = try context.fetch(request)
+        } catch {
+            print("Error fetching data from context \(error.localizedDescription)")
         }
     }
     
 }
-
-
-
-
