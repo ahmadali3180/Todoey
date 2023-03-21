@@ -9,7 +9,7 @@
 import UIKit
 import RealmSwift
 
-class CategoryViewController: UITableViewController {
+class CategoryViewController: SwipeTableViewController {
     
     let realm = try! Realm()
      
@@ -18,6 +18,7 @@ class CategoryViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         loadCategories()
+        tableView.rowHeight = 70.0
     }
     
     //MARK: - TableView DataSource Methods
@@ -27,10 +28,9 @@ class CategoryViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
-        cell.textLabel?.text = categoryArray?[indexPath.row].name ?? "No Categories Added yet"
         
-        
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
+        cell.textLabel?.text = categoryArray?[indexPath.row].name ?? "No Categories Added yet"  
         return cell
     }
     
@@ -69,8 +69,21 @@ class CategoryViewController: UITableViewController {
         tableView.reloadData()
     }
     
-    //MARK: - Add New Categories
+    //MARK: - Delete Data From Swipe
     
+    override func updateModel(at indexPath: IndexPath) {
+        if let categoryForDeletion = self.categoryArray?[indexPath.row] {
+            do {
+                try self.realm.write {
+                    self.realm.delete(categoryForDeletion)
+                }
+            } catch {
+                print("Error Deleting Category: \(error.localizedDescription)")
+                }
+            }
+        }
+    
+    //MARK: - Add New Categories
     
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         var textField = UITextField()
@@ -108,12 +121,8 @@ extension CategoryViewController: UISearchBarDelegate {
     //MARK: - SearchBarMethods
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-//        let request: NSFetchRequest<Category> = Category.fetchRequest()
-//
-//        //        Request Methods for a querry
-//        request.predicate = NSPredicate(format: "name CONTAINS[cd] %@", searchBar.text!)
-//        request.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
-//        loadCategories(with: request)
+        categoryArray = categoryArray?.filter("name CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "name", ascending: true)
+        tableView.reloadData()
     }
     
     //    if no  input passed in searchBar
@@ -126,5 +135,3 @@ extension CategoryViewController: UISearchBarDelegate {
         }
     }
 }
-
-
