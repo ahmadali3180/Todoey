@@ -40,7 +40,7 @@
                         </connections>
                     </tableView>
                     <navigationItem key="navigationItem" title="Items" id="iZG-nm-bt1">
-                        <barButtonItem key="rightBarButtonItem" style="plain" systemItem="add" id="ju2-Mp-if4">
+                        <barButtonItem key="rightBarButtonItem" systemItem="add" id="ju2-Mp-if4">
                             <color key="tintColor" systemColor="labelColor"/>
                             <connections>
                                 <action selector="addButtonPressed:" destination="oAo-dy-Hf3" id="QF2-LQ-mmW"/>
