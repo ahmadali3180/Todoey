@@ -8,17 +8,20 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
 class CategoryViewController: SwipeTableViewController {
     
     let realm = try! Realm()
-     
+    
     var categoryArray: Results<Category>?
     
     override func viewDidLoad() {
         super.viewDidLoad()
         loadCategories()
+        tableView.separatorStyle = .none
         tableView.rowHeight = 70.0
+        
     }
     
     //MARK: - TableView DataSource Methods
@@ -30,7 +33,17 @@ class CategoryViewController: SwipeTableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
-        cell.textLabel?.text = categoryArray?[indexPath.row].name ?? "No Categories Added yet"  
+        if let category = categoryArray?[indexPath.row] {
+            cell.textLabel?.text = category.name
+            let color = UIColor(hexString: category.colour)
+            cell.backgroundColor = color
+            cell.textLabel?.textColor = ContrastColorOf(color!, returnFlat: true)
+        } else {
+            cell.textLabel?.text = "No Categories Added Yet"
+            cell.backgroundColor = UIColor(hexString: "1d9bf6")
+        }
+        
+        
         return cell
     }
     
@@ -79,9 +92,9 @@ class CategoryViewController: SwipeTableViewController {
                 }
             } catch {
                 print("Error Deleting Category: \(error.localizedDescription)")
-                }
             }
         }
+    }
     
     //MARK: - Add New Categories
     
@@ -93,7 +106,7 @@ class CategoryViewController: SwipeTableViewController {
             if textField.text?.count != 0 {
                 let newCategory = Category()
                 newCategory.name = textField.text!
-                
+                newCategory.colour = UIColor.randomFlat().hexValue()
                 self.saveCategory(category: newCategory)
                 
             } else {
@@ -125,8 +138,11 @@ extension CategoryViewController: UISearchBarDelegate {
         tableView.reloadData()
     }
     
+    
+    
     //    if no  input passed in searchBar
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        
         if searchBar.text?.count == 0 {
             loadCategories()
             DispatchQueue.main.async {

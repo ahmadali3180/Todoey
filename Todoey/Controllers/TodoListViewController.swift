@@ -1,6 +1,7 @@
 import UIKit
 import RealmSwift
 import SwipeCellKit
+import ChameleonFramework
 
 
 class TodoListViewController: SwipeTableViewController  {
@@ -15,6 +16,7 @@ class TodoListViewController: SwipeTableViewController  {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        tableView.separatorStyle = .none
         tableView.rowHeight = 70.0
     }
     
@@ -28,8 +30,14 @@ class TodoListViewController: SwipeTableViewController  {
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
         if let item = todoItems?[indexPath.row] {
             cell.textLabel?.text = item.title
+            let percentage = CGFloat(indexPath.row) / (CGFloat(todoItems!.count) * CGFloat(3))
+            
+            if let colour = UIColor(hexString: item.colour)?.darken(byPercentage: percentage) {
+                cell.backgroundColor = colour
+                view.backgroundColor = colour.lighten(byPercentage: percentage)
+                cell.textLabel?.textColor = ContrastColorOf(colour, returnFlat: true)
+            }
             cell.accessoryType = item.done ? .checkmark : .none
-            print(item)
         } else {
             cell.textLabel?.text = "No Items Added"
         }
@@ -45,7 +53,7 @@ class TodoListViewController: SwipeTableViewController  {
             do {
                 try realm.write {
                     item.done = !item.done
-//                    realm.delete(item)
+                    //                    realm.delete(item)
                 }
             } catch {
                 print("Error: \(error.localizedDescription)")
@@ -75,6 +83,7 @@ class TodoListViewController: SwipeTableViewController  {
                             newItem.title = textField.text!
                             newItem.dateCreated = Date()
                             currentCategory.items.append(newItem)
+                            newItem.colour = currentCategory.colour
                         }
                     } catch {
                         print("Error: \(error.localizedDescription)")
@@ -107,16 +116,18 @@ class TodoListViewController: SwipeTableViewController  {
         tableView.reloadData()
     }
     
+    //MARK: - Delete Items From Swipe
+    
     override func updateModel(at indexPath: IndexPath) {
-        if let itemForDeletion = self.todoItems?[indexPath.row] {
+        if let item = self.todoItems?[indexPath.row] {
             do {
                 try self.realm.write {
-                    self.realm.delete(itemForDeletion)
+                    self.realm.delete(item)
                 }
             } catch {
                 print("Error Deleting Category: \(error.localizedDescription)")
-                }
             }
+        }
     }
     
 }
@@ -131,7 +142,10 @@ extension TodoListViewController: UISearchBarDelegate {
         tableView.reloadData()
     }
     
+    
+    
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        
         if searchBar.text?.count == 0 {
             loadItems()
             DispatchQueue.main.async {
