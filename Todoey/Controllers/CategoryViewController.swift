@@ -24,6 +24,20 @@ class CategoryViewController: SwipeTableViewController {
         
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        guard let navBar = navigationController?.navigationBar else {fatalError("Navigation Bar doesn't exist.")}
+        guard let bgColour = UIColor(hexString:  "#1D9BF6") else {fatalError()}
+        
+        navBar.backgroundColor = bgColour
+        view.backgroundColor = navBar.backgroundColor
+        navBar.barTintColor = bgColour
+        navBar.tintColor = ContrastColorOf(bgColour, returnFlat: true)
+        tableView.reloadData()
+    }
+    
+    @IBOutlet weak var categorySearchBar: UISearchBar!
+    
+    
     //MARK: - TableView DataSource Methods
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -35,9 +49,9 @@ class CategoryViewController: SwipeTableViewController {
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
         if let category = categoryArray?[indexPath.row] {
             cell.textLabel?.text = category.name
-            let color = UIColor(hexString: category.colour)
+            guard let color = UIColor(hexString: category.colour) else {fatalError()}
             cell.backgroundColor = color
-            cell.textLabel?.textColor = ContrastColorOf(color!, returnFlat: true)
+            cell.textLabel?.textColor = ContrastColorOf(color, returnFlat: true)
         } else {
             cell.textLabel?.text = "No Categories Added Yet"
             cell.backgroundColor = UIColor(hexString: "1d9bf6")
@@ -125,29 +139,4 @@ class CategoryViewController: SwipeTableViewController {
         present(alert, animated: true)
     }
     
-}
-
-//MARK: - UISearchBarDelegate
-
-extension CategoryViewController: UISearchBarDelegate {
-    
-    //MARK: - SearchBarMethods
-    
-    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        categoryArray = categoryArray?.filter("name CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "name", ascending: true)
-        tableView.reloadData()
-    }
-    
-    
-    
-    //    if no  input passed in searchBar
-    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        
-        if searchBar.text?.count == 0 {
-            loadCategories()
-            DispatchQueue.main.async {
-                searchBar.resignFirstResponder()
-            }
-        }
-    }
 }

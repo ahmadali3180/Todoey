@@ -13,11 +13,36 @@ class TodoListViewController: SwipeTableViewController  {
             loadItems()
         }
     }
+    @IBOutlet weak var itemSearchBar: UISearchBar!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         tableView.separatorStyle = .none
         tableView.rowHeight = 70.0
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        
+        if let colorHex = selectedCategory?.colour {
+            title = selectedCategory!.name
+            
+            guard let navBar = navigationController?.navigationBar else {fatalError("Navigation Controller doesn't exist.")}
+            guard let navBarColour = UIColor(hexString: colorHex) else {fatalError()}
+            
+            navBar.backgroundColor = navBarColour
+            navBar.tintColor = ContrastColorOf(navBarColour, returnFlat: true)
+            navBar.barTintColor = navBarColour
+            view.backgroundColor = navBarColour
+            navBar.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor : ContrastColorOf(navBarColour, returnFlat: true)]
+            
+            itemSearchBar.barTintColor  = navBarColour
+            if #available(iOS 13.0, *) {
+                itemSearchBar.searchTextField.textColor = ContrastColorOf(navBarColour, returnFlat: true)
+            } else {
+                // Fallback on earlier versions
+            }
+            
+        }
     }
     
     //MARK: - TableView DataSource Methods
@@ -34,7 +59,6 @@ class TodoListViewController: SwipeTableViewController  {
             
             if let colour = UIColor(hexString: item.colour)?.darken(byPercentage: percentage) {
                 cell.backgroundColor = colour
-                view.backgroundColor = colour.lighten(byPercentage: percentage)
                 cell.textLabel?.textColor = ContrastColorOf(colour, returnFlat: true)
             }
             cell.accessoryType = item.done ? .checkmark : .none
@@ -141,8 +165,6 @@ extension TodoListViewController: UISearchBarDelegate {
         todoItems = todoItems?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "dateCreated", ascending: true)
         tableView.reloadData()
     }
-    
-    
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         
